@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Job Matcher</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.12);
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            width: 100%;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 2.8rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .matcher-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            width: 100%;
+            margin-bottom: 40px;
+            transition: var(--transition);
+        }
+
+        .matcher-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .input-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: var(--dark);
+        }
+
+        .input-icon {
+            background: var(--primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .char-count {
+            font-size: 0.85rem;
+            color: var(--gray);
+            background: var(--gray-light);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 250px;
+            padding: 20px;
+            border: 2px solid var(--gray-light);
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--dark);
+            background: var(--light);
+            resize: vertical;
+            transition: var(--transition);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+
+        textarea::placeholder {
+            color: #adb5bd;
+        }
+
+        #resume {
+            border-left: 4px solid var(--primary);
+        }
+
+        #job {
+            border-left: 4px solid var(--secondary);
+        }
+
+        .upload-area {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background: var(--gray-light);
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        .file-label:hover {
+            background: #dee2e6;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        .submit-area {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(67, 97, 238, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn i {
+            font-size: 1.2rem;
+        }
+
+        .features {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-top: 40px;
+            width: 100%;
+        }
+
+        .feature {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            flex: 1;
+            min-width: 200px;
+            max-width: 250px;
+            transition: var(--transition);
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .feature h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .feature p {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .footer-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .matcher-card {
+                padding: 30px 25px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 15px;
+            }
+            
+            .matcher-card {
+                padding: 25px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .input-title {
+                font-size: 1.1rem;
+            }
+            
+            textarea {
+                min-height: 200px;
+                padding: 15px;
+            }
+            
+            .submit-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .features {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .feature {
+                width: 100%;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+            </div>
+            <h1>AI Resume Job Matcher</h1>
+            <p class="subtitle">
+                Upload your resume and job description to get an AI-powered compatibility score. 
+                Our algorithm analyzes skills, experience, and requirements to find your perfect match.
+            </p>
+        </header>
+
+        <main>
+            <div class="matcher-card">
+                <form action="/match-ui" method="post" enctype="multipart/form-data">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <div class="input-header">
+                                <div class="input-title">
+                                    <div class="input-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <span>Your Resume</span>
+                                </div>
+                                <div class="char-count">
+                                    <span id="resume-count">0</span> characters
+                                </div>
+                            </div>
+                            <textarea 
+                                id="resume" 
+                                name="resume" 
+                                placeholder="Paste your resume text here...&#10;Include your skills, experience, education, and achievements.&#10;&#10;Or upload a file using the button below." 
+                                rows="8"
+                                oninput="updateCharCount('resume', 'resume-count')"></textarea>
+                            
+                            <div class="upload-area">
+                                <input type="file" id="resumeFile" name="resumeFile" class="file-input" accept=".txt,.pdf,.doc,.docx" onchange="updateFileName('resumeFile', 'resume-file-name')">
+                                <label for="resumeFile" class="file-label">
+                                    <i class="fas fa-upload"></i> Upload Resume
+                                </label>
+                                <span id="resume-file-name" class="file-name">No file chosen</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <div class="input-header">
+                                <div class="input-title">
+                                    <div class="input-icon" style="background: var(--secondary);">
+                                        <i class="fas fa-briefcase"></i>
+                                    </div>
+                                    <span>Job Description</span>
+                                </div>
+                                <div class="char-count">
+                                    <span id="job-count">0</span> characters
+                                </div>
+                            </div>
+                            <textarea 
+                                id="job" 
+                                name="job" 
+                                placeholder="Paste the job description here...&#10;Include required skills, responsibilities, qualifications, and experience level.&#10;&#10;For best results, copy the full job posting." 
+                                rows="8"
+                                oninput="updateCharCount('job', 'job-count')"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="submit-area">
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-calculator"></i> Calculate Match Score
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>AI-Powered Analysis</h3>
+                    <p>Advanced NLP algorithms analyze semantic meaning and contextual relevance.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Detailed Metrics</h3>
+                    <p>Get comprehensive scores for skills match, experience level, and keyword alignment.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Privacy Focused</h3>
+                    <p>Your data is processed securely and never stored on our servers.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-text">
+                <i class="far fa-copyright"></i>
+                <span>AI Resume Job Matcher | Powered by Spring Boot & AI</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Character count update
+        function updateCharCount(textareaId, countId) {
+            const textarea = document.getElementById(textareaId);
+            const countElement = document.getElementById(countId);
+            if (textarea && countElement) {
+                countElement.textContent = textarea.value.length;
+            }
+        }
+        
+        // File name display
+        function updateFileName(inputId, fileNameId) {
+            const fileInput = document.getElementById(inputId);
+            const fileNameElement = document.getElementById(fileNameId);
+            
+            if (fileInput.files.length > 0) {
+                fileNameElement.textContent = fileInput.files[0].name;
+                
+                // If a text file is uploaded, read and populate the textarea
+                if (fileInput.files[0].type === "text/plain") {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('resume').value = e.target.result;
+                        updateCharCount('resume', 'resume-count');
+                    };
+                    reader.readAsText(fileInput.files[0]);
+                }
+            } else {
+                fileNameElement.textContent = "No file chosen";
+            }
+        }
+        
+        // Initialize character counts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCharCount('resume', 'resume-count');
+            updateCharCount('job', 'job-count');
+        });
+    </script>
+</body>
+</html>

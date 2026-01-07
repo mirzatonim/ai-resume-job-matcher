@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Result - AI Resume Job Matcher</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --match-green: #2ecc71;
+            --match-yellow: #f1c40f;
+            --match-red: #e74c3c;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.12);
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo a {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-header {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Score Circle */
+        .score-circle {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+
+        .score-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .score-ring-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: none !important;
+            transition: var(--transition);
+        }
+        
+        .score-inner-white {
+            position: absolute;
+            width: 170px; 
+            height: 170px;
+            background: white;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .score-value {
+            z-index: 2; 
+        }
+
+        .score-ring-back {
+            border: 15px solid var(--gray-light);
+        }
+/* 
+        .score-ring-front {
+            border: 15px solid;
+            border-color: transparent;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        } */
+
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 3.5rem;
+        }
+
+        .score-label {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-top: -20px;
+        }
+
+        /* Status Badge */
+        .status-container {
+            margin: 30px 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-match {
+            background: linear-gradient(135deg, var(--match-green), #27ae60);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .status-no-match {
+            background: linear-gradient(135deg, var(--match-red), #c0392b);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .status-message {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Match Details */
+        .match-details {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .match-details h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-item {
+            margin-bottom: 20px;
+        }
+
+        .detail-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--gray-light);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s ease-in-out;
+        }
+
+        .skills-match {
+            background: linear-gradient(90deg, var(--match-green), #2ecc71);
+            width: attr(data-match);
+        }
+
+        .experience-match {
+            background: linear-gradient(90deg, var(--match-yellow), #f1c40f);
+            width: attr(data-match);
+        }
+
+        .keywords-match {
+            background: linear-gradient(90deg, var(--primary), #4361ee);
+            width: attr(data-match);
+        }
+
+        /* Recommendations */
+        .recommendations {
+            background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .recommendations h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recommendation-list {
+            list-style-type: none;
+        }
+
+        .recommendation-list li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .recommendation-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--match-green);
+            font-weight: bold;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--gray-light);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-light);
+            transform: translateY(-3px);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--match-green), #27ae60);
+            color: white;
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-download:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(46, 204, 113, 0.4);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            padding: 20px;
+            width: 100%;
+        }
+
+        /* Color based on score */
+        .score-high {
+            color: var(--match-green);
+        }
+
+        .score-medium {
+            color: var(--match-yellow);
+        }
+
+        .score-low {
+            color: var(--match-red);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .result-card {
+                padding: 30px 25px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .score-circle {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .score-value {
+                font-size: 3rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+            
+            .result-card {
+                padding: 25px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .score-circle {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .score-value {
+                font-size: 2.5rem;
+            }
+            
+            .status-badge {
+                font-size: 1.2rem;
+                padding: 10px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <a href="/">
+                <div class="logo-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <span>AI Resume Job Matcher</span>
+            </a>
+        </div>
+
+        <div class="result-card">
+            <div class="result-header">
+                <h1>Match Analysis Complete</h1>
+                <p class="subtitle">Here's how your resume compares to the job description</p>
+            </div>
+
+            <!-- Score Circle -->
+            <div class="score-circle">
+                <div class="score-ring score-ring-back"></div>
+                
+                <div class="score-ring score-ring-front" 
+                    th:style="'background: conic-gradient(' + 
+                            (${score >= 70} ? '#2ecc71' : (${score >= 40} ? '#f1c40f' : '#e74c3c')) + 
+                            ' ' + (${score * 3.6}) + 'deg, transparent 0deg);'">
+                </div>
+                
+                <div class="score-inner-white"></div>
+                
+                <div class="score-value" 
+                    th:classappend="${score >= 70} ? 'score-high' : (${score >= 40} ? 'score-medium' : 'score-low')"
+                    th:text="${score} + '%'">
+                </div>
+            </div>
+            <div class="score-label">COMPATIBILITY SCORE</div>
+
+            <!-- Status Badge -->
+            <div class="status-container">
+                <div class="status-badge" 
+                     th:classappend="${match} ? 'status-match' : 'status-no-match'">
+                    <span th:text="${match} ? 'STRONG MATCH' : 'NEEDS IMPROVEMENT'"></span>
+                </div>
+                <p class="status-message" th:text="${match} ? 
+                    'Your qualifications align well with the job requirements!' : 
+                    'Consider enhancing your skills to better match this position.'">
+                </p>
+            </div>
+
+            <!-- Match Details (Optional - if you have additional data) -->
+            <div class="match-details" th:if="${skillsMatch != null or experienceMatch != null}">
+                <h3><i class="fas fa-chart-bar"></i> Detailed Analysis</h3>
+                
+                <div class="detail-item" th:if="${skillsMatch != null}">
+                    <div class="detail-label">
+                        <span>Skills Match</span>
+                        <span th:text="${skillsMatch} + '%'"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill skills-match" th:style="'width: ' + ${skillsMatch} + '%;'"></div>
+                    </div>
+                </div>
+                
+                <div class="detail-item" th:if="${experienceMatch != null}">
+                    <div class="detail-label">
+                        <span>Experience Level</span>
+                        <span th:text="${experienceMatch} + '%'"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill experience-match" th:style="'width: ' + ${experienceMatch} + '%;'"></div>
+                    </div>
+                </div>
+                
+                <div class="detail-item" th:if="${keywordsMatch != null}">
+                    <div class="detail-label">
+                        <span>Keywords Match</span>
+                        <span th:text="${keywordsMatch} + '%'"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill keywords-match" th:style="'width: ' + ${keywordsMatch} + '%;'"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="recommendations" th:if="${!match}">
+                <h3><i class="fas fa-lightbulb"></i> Improvement Suggestions</h3>
+                <ul class="recommendation-list">
+                    <li th:if="${score < 50}">Highlight more relevant skills from the job description</li>
+                    <li th:if="${score < 70}">Add specific metrics and achievements to your experience</li>
+                    <li th:if="${score < 60}">Include more keywords from the job requirements</li>
+                    <li th:if="${score < 80}">Consider obtaining relevant certifications mentioned in the job</li>
+                    <li>Tailor your resume summary to match the job title and responsibilities</li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-redo"></i> Try Another Match
+                </a>
+                
+                <button class="btn btn-secondary" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print Result
+                </button>
+                
+                <a href="#" class="btn btn-download" th:if="${match}">
+                    <i class="fas fa-download"></i> Download Tips
+                </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>AI Resume Job Matcher | Powered by Spring Boot & AI</p>
+        </footer>
+    </div>
+
+    <script>
+        // Animate progress bars on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html>
