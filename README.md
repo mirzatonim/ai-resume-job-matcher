@@ -18,10 +18,4 @@ Spring Boot → AI NLP Service → ML Models
 - Experience match score
 - Keyword relevance
 
-## Run Project
 
-### AI Service
-```bash
-cd ai-service
-pip install -r requirements.txt
-uvicorn app:app --port 8000
